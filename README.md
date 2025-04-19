@@ -24,7 +24,7 @@ This program implements a contiguous memory allocator that supports the followin
 
 ### How to Use the Program
 
-1. Compile the program with: `gcc -o allocator memory_allocator.c`
+1. Compile the program with: `gcc allocator.c -o allocator`
     
 2. Run the program with the total memory size: `./allocator 1048576` (for 1MB)
     
@@ -35,3 +35,108 @@ This program implements a contiguous memory allocator that supports the followin
     - `C` - Compact memory
     - `STAT` - Display memory allocation status
     - `X` - Exit the program
+
+--------
+### Example for testing code
+Here's a test scenario plan showing how external fragmentation occurs and how compaction solves it:
+
+1) Add 3 processes in sequence, each with specific memory sizes
+2) Remove the middle process to create fragmentation
+3) Try to add a new process that fails due to external fragmentation
+4) Perform compaction
+5) Successfully add the same process after compaction
+
+
+**First**, initialize the memory allocator with a specific size, let's say 1000 bytes:
+```bash
+./allocator 1000
+```
+
+#### 1)Add 3 processes in sequence:
+
+```bash
+allocator> RQ P1 300 F
+allocator> RQ P2 200 F
+allocator> RQ P3 400 F
+```
+
+
+#### 2)Check current memory status
+
+```bash
+allocator> STAT
+```
+**Output:**
+
+```bash
+Addresses [0:299] Process P1
+Addresses [300:499] Process P2
+Addresses [500:899] Process P3
+Addresses [900:999] Unused
+```
+
+#### 3)Remove the middle process (P2)
+```bash
+allocator> RL P2
+
+```
+
+#### 4)Check status to confirm fragmentation
+```bash
+allocator> STAT
+```
+**Output:**
+```bash
+Addresses [0:299] Process P1
+Addresses [300:499] Unused
+Addresses [500:899] Process P3
+Addresses [900:999] Unused
+```
+#### 5)Try adding a new process that won't fit in any individual free block
+ 
+```bash
+allocator> RQ P4 350 F
+```
+**output:**
+```bash
+Failed to allocate memory for process P4
+```
+
+#### 6)Perform memory compaction
+```bash
+allocator> C
+```
+
+#### 7)Check status after compaction
+```bash
+allocator> STAT
+
+```
+**output:**
+```bash
+Addresses [0:299] Process P1
+Addresses [300:699] Process P3
+Addresses [700:999] Unused
+```
+#### 8)Try adding P4 again
+```bash
+allocator> RQ P4 300 F
+
+```
+output:
+```bash
+Successfully allocated 300 to process P4
+```
+#### 9)Check final status
+allocator> STAT
+**output:**
+```bash
+Addresses [0:299] Process P1
+Addresses [300:699] Process P3
+Addresses [700:999] Process P4
+```
+
+#### 10)Exit the program
+```bash
+allocator> X
+```
